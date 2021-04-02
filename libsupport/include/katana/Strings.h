@@ -19,6 +19,13 @@
 
 namespace katana {
 
+/// FromBase64 decodes \param input into a Base64 encoded string
+KATANA_EXPORT std::string FromBase64(const std::string& input);
+
+/// ToBase64 encodes \param message string into a Base64 string if \param url_safe is set to true the base64 result is encoded using the RFC4648 replacements for + and /.
+KATANA_EXPORT std::string ToBase64(
+    const std::string& message, bool url_safe = false);
+
 /// TrimPrefix returns a string without the given prefix. If the string does
 /// not have the prefix, return the string unchanged.
 KATANA_EXPORT std::string TrimPrefix(
