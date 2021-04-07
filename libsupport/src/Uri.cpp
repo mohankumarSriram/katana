@@ -18,7 +18,7 @@
 namespace {
 
 // get scheme and path, always drop trailing slash
-const std::regex kUriRegex("(?:([a-zA-Z0-9]+)://)?(.+)/?");
+const std::regex kUriRegex("^(?:([a-zA-Z0-9]+)://)?(.+?)/?$");
 
 // This function does not recognize any path seperator other than kSepChar. This
 // could be a problem for Windows or "non-standard S3" paths.
@@ -101,19 +101,17 @@ DoJoinPath(std::string_view dir, std::string_view file) {
   if (dir[dir.size() - 1] != katana::Uri::kSepChar) {
     if (file[0] != katana::Uri::kSepChar) {
       return fmt::format("{}{}{}", dir, katana::Uri::kSepChar, file);
-    } else {
-      while (file[1] == katana::Uri::kSepChar) {
-        file.remove_prefix(1);
-      }
-      return fmt::format("{}{}", dir, file);
     }
-  } else {
-    while (dir[dir.size() - 2] == katana::Uri::kSepChar) {
-      dir.remove_suffix(1);
-    }
-    while (file[0] == katana::Uri::kSepChar) {
+    while (file[1] == katana::Uri::kSepChar) {
       file.remove_prefix(1);
     }
+    return fmt::format("{}{}", dir, file);
+  }
+  while (dir[dir.size() - 2] == katana::Uri::kSepChar) {
+    dir.remove_suffix(1);
+  }
+  while (file[0] == katana::Uri::kSepChar) {
+    file.remove_prefix(1);
   }
   KATANA_LOG_ASSERT(dir[dir.size() - 1] == katana::Uri::kSepChar);
   return fmt::format("{}{}", dir, file);
@@ -144,7 +142,7 @@ Result<Uri>
 Uri::Make(const std::string& str) {
   std::smatch sub_match;
   if (!std::regex_match(str, sub_match, kUriRegex)) {
-    return ErrorCode::InvalidArgument;
+    return KATANA_ERROR(ErrorCode::InvalidArgument, "could not parse URI");
   }
   std::string scheme(sub_match[1]);
   std::string path(sub_match[2]);

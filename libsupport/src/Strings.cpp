@@ -7,6 +7,17 @@
 #include <boost/archive/iterators/insert_linebreaks.hpp>
 #include <boost/archive/iterators/remove_whitespace.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
+namespace {
+
+size_t
+next_sep(std::string_view s, std::string_view sep, size_t start = 0) {
+  if (sep.empty()) {
+    return start + 1;
+  }
+  return s.find(sep, start);
+}
+
+}  // namespace
 
 bool
 katana::HasPrefix(const std::string& s, const std::string& prefix) {
@@ -81,4 +92,20 @@ katana::ToBase64(const std::string& msg, bool url_safe) {
   }
   // Add padding.
   return b64.append((3 - msg.size() % 3) % 3, '=');
+
+std::vector<std::string_view>
+katana::SplitView(std::string_view s, std::string_view sep, uint64_t max) {
+  std::vector<std::string_view> words;
+  size_t start = 0;
+  size_t end = next_sep(s, sep);
+  for (uint64_t i = 0; i < max; ++i) {
+    if (end >= s.length()) {
+      break;
+    }
+    words.emplace_back(s.substr(start, end - start));
+    start = end + sep.length();
+    end = next_sep(s, sep, start);
+  }
+  words.emplace_back(s.substr(start));
+  return words;
 }
